@@ -2,26 +2,39 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-
-const ADMIN_PASSWORD = "ALPESH";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [mail, setMail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (password !== ADMIN_PASSWORD) {
-      setError("Invalid password.");
-      return;
+    try {
+      const res = await fetch("/api/auth/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, mail: mail || undefined }),
+      });
+      const data = (await res.json()) as { error?: string };
+
+      if (!res.ok) {
+        setError(data.error ?? "Invalid password.");
+        return;
+      }
+
+      router.push("/admin/form");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/admin/form");
   }
 
   return (
@@ -88,9 +101,10 @@ export default function AdminLoginPage() {
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-zinc-900 py-2.5 font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              disabled={loading}
+              className="w-full rounded-lg bg-zinc-900 py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              Sign in
+              {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         </div>

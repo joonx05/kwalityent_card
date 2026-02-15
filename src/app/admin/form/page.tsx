@@ -1,16 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { CardPreview } from "@/components/CardPreview";
 
 const inputClass =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-900 placeholder-zinc-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500";
 const labelClass =
   "mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300";
 
+/** Preview size as fraction of viewport: width 3/10, height ~90% */
+const PREVIEW_WIDTH_RATIO = 0.3;
+const PREVIEW_HEIGHT_RATIO = 0.9;
+
 export default function AdminFormPage() {
-  const [coverImageUrl, setCoverImageUrl] = useState("");
-  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+
   const [fullName, setFullName] = useState("John Keats");
   const [firstName, setFirstName] = useState("John");
   const [lastName, setLastName] = useState("Keats");
@@ -30,6 +36,55 @@ export default function AdminFormPage() {
     "https://www.instagram.com/johnkeats"
   );
   const [saved, setSaved] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewSize, setPreviewSize] = useState({ width: 360, height: 720 });
+
+  const updatePreviewSize = useCallback(() => {
+    if (typeof window === "undefined") return;
+    setPreviewSize({
+      width: Math.round(window.innerWidth * PREVIEW_WIDTH_RATIO),
+      height: Math.round(window.innerHeight * PREVIEW_HEIGHT_RATIO),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!showPreview) return;
+    updatePreviewSize();
+    window.addEventListener("resize", updatePreviewSize);
+    return () => window.removeEventListener("resize", updatePreviewSize);
+  }, [showPreview, updatePreviewSize]);
+
+  const coverPreviewUrl = useMemo(
+    () => (coverFile ? URL.createObjectURL(coverFile) : ""),
+    [coverFile]
+  );
+  const profilePreviewUrl = useMemo(
+    () => (profileFile ? URL.createObjectURL(profileFile) : ""),
+    [profileFile]
+  );
+
+  useEffect(() => () => {
+    if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+  }, [coverPreviewUrl]);
+  useEffect(() => () => {
+    if (profilePreviewUrl) URL.revokeObjectURL(profilePreviewUrl);
+  }, [profilePreviewUrl]);
+
+  const setCoverFileAndUrl = (file: File | null) => setCoverFile(file);
+  const setProfileFileAndUrl = (file: File | null) => setProfileFile(file);
+
+  const allRequiredFilled =
+    coverFile != null &&
+    profileFile != null &&
+    fullName.trim() !== "" &&
+    firstName.trim() !== "" &&
+    lastName.trim() !== "" &&
+    title.trim() !== "" &&
+    org.trim() !== "" &&
+    interests.trim() !== "" &&
+    phone.trim() !== "" &&
+    personalEmail.trim() !== "" &&
+    workEmail.trim() !== "";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,29 +125,37 @@ export default function AdminFormPage() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="cover-image" className={labelClass}>
-                    Cover / poster image (path or URL)
+                    Cover / poster image
                   </label>
                   <input
                     id="cover-image"
-                    type="text"
-                    value={coverImageUrl}
-                    onChange={(e) => setCoverImageUrl(e.target.value)}
-                    placeholder="/poster_image.jpg"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setCoverFileAndUrl(e.target.files?.[0] ?? null)}
                     className={inputClass}
                   />
+                  {coverFile && (
+                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      {coverFile.name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="profile-image" className={labelClass}>
-                    Profile image (path or URL)
+                    Profile image
                   </label>
                   <input
                     id="profile-image"
-                    type="text"
-                    value={profileImageUrl}
-                    onChange={(e) => setProfileImageUrl(e.target.value)}
-                    placeholder="/profile_image.png"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProfileFileAndUrl(e.target.files?.[0] ?? null)}
                     className={inputClass}
                   />
+                  {profileFile && (
+                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      {profileFile.name}
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
@@ -308,7 +371,15 @@ export default function AdminFormPage() {
               </div>
             </section>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                disabled={!allRequiredFilled}
+                className="rounded-lg border-2 border-zinc-300 bg-white px-6 py-2.5 font-semibold text-zinc-800 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              >
+                Preview
+              </button>
               <button
                 type="submit"
                 className="rounded-lg bg-zinc-900 px-6 py-2.5 font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
@@ -324,6 +395,51 @@ export default function AdminFormPage() {
           </form>
         </div>
       </main>
+
+      {/* Preview modal */}
+      {showPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          aria-modal
+          role="dialog"
+          aria-label="Card preview"
+        >
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowPreview(false)}
+            aria-hidden
+          />
+          <div className="relative flex flex-col items-center gap-4">
+            <CardPreview
+              config={{
+                coverImageUrl: coverPreviewUrl || undefined,
+                profileImageUrl: profilePreviewUrl || undefined,
+                fullName: fullName.trim(),
+                title: title.trim(),
+                org: org.trim(),
+                interests: interests.trim(),
+                phone: phone.trim(),
+                personalEmail: personalEmail.trim(),
+                workEmail: workEmail.trim(),
+                linkedInUrl: linkedInUrl.trim() || undefined,
+                telegramUrl: telegramUrl.trim() || undefined,
+                twitterUrl: twitterUrl.trim() || undefined,
+                whatsAppUrl: whatsAppUrl.trim() || undefined,
+                instagramUrl: instagramUrl.trim() || undefined,
+              }}
+              width={previewSize.width}
+              height={previewSize.height}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPreview(false)}
+              className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-lg transition hover:bg-zinc-100 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+            >
+              Close preview
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
