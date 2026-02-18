@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { CardPreview } from "@/components/CardPreview";
 
@@ -9,8 +9,10 @@ const inputClass =
 const labelClass =
   "mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300";
 
-/** Preview size as fraction of viewport: width 3/10, height ~90% */
-const PREVIEW_WIDTH_RATIO = 0.3;
+/** Preview: mobile (width < 640px) = 90% width; desktop = 30% width, 90% height. */
+const PREVIEW_WIDTH_RATIO_MOBILE = 0.9;
+const PREVIEW_WIDTH_RATIO_DESKTOP = 0.3;
+const PREVIEW_MOBILE_BREAKPOINT = 640;
 const PREVIEW_HEIGHT_RATIO = 0.9;
 
 export default function AdminFormPage() {
@@ -36,14 +38,27 @@ export default function AdminFormPage() {
     "https://www.instagram.com/johnkeats"
   );
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [previewSize, setPreviewSize] = useState({ width: 360, height: 720 });
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const [previewSize, setPreviewSize] = useState<{
+    width: number;
+    height: number | undefined;
+    scrollableOnMobile: boolean;
+  }>({ width: 360, height: 720, scrollableOnMobile: false });
 
   const updatePreviewSize = useCallback(() => {
     if (typeof window === "undefined") return;
+    const isMobile = window.innerWidth < PREVIEW_MOBILE_BREAKPOINT;
+    const widthRatio = isMobile ? PREVIEW_WIDTH_RATIO_MOBILE : PREVIEW_WIDTH_RATIO_DESKTOP;
     setPreviewSize({
-      width: Math.round(window.innerWidth * PREVIEW_WIDTH_RATIO),
-      height: Math.round(window.innerHeight * PREVIEW_HEIGHT_RATIO),
+      width: Math.round(window.innerWidth * widthRatio),
+      height: isMobile
+        ? Math.round(window.innerHeight * 0.85)
+        : Math.round(window.innerHeight * PREVIEW_HEIGHT_RATIO),
+      scrollableOnMobile: isMobile,
     });
   }, []);
 
@@ -86,15 +101,93 @@ export default function AdminFormPage() {
     personalEmail.trim() !== "" &&
     workEmail.trim() !== "";
 
-  function handleSubmit(e: React.FormEvent) {
+  function clearAllFields() {
+    setCoverFile(null);
+    setProfileFile(null);
+    setFullName("");
+    setFirstName("");
+    setLastName("");
+    setTitle("");
+    setOrg("");
+    setInterests("");
+    setPhone("");
+    setPersonalEmail("");
+    setWorkEmail("");
+    setLinkedInUrl("");
+    setTelegramUrl("");
+    setTwitterUrl("");
+    setWhatsAppUrl("");
+    setInstagramUrl("");
+    if (coverInputRef.current) coverInputRef.current.value = "";
+    if (profileInputRef.current) profileInputRef.current.value = "";
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: persist to API / DB; for now just confirm
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    if (!allRequiredFilled || saving) return;
+    setSaving(true);
+    setSubmitError(null);
+    try {
+      const formDataCover = new FormData();
+      formDataCover.append("file", coverFile!);
+      const resCover = await fetch("/api/fileupload", { method: "POST", body: formDataCover });
+      const dataCover = (await resCover.json()) as { url?: string; key?: string; error?: string; message?: string };
+      if (!resCover.ok) throw new Error(dataCover.error ?? dataCover.message ?? "Cover image upload failed");
+      const coverImageUrl = dataCover.url ?? (dataCover.key ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? ""}/${dataCover.key}`.replace(/\/+/g, "/") : null);
+      if (!coverImageUrl) throw new Error("Could not get cover image URL");
+
+      const formDataProfile = new FormData();
+      formDataProfile.append("file", profileFile!);
+      const resProfile = await fetch("/api/fileupload", { method: "POST", body: formDataProfile });
+      const dataProfile = (await resProfile.json()) as { url?: string; key?: string; error?: string; message?: string };
+      if (!resProfile.ok) throw new Error(dataProfile.error ?? dataProfile.message ?? "Profile image upload failed");
+      const profileImageUrl = dataProfile.url ?? (dataProfile.key ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? ""}/${dataProfile.key}`.replace(/\/+/g, "/") : null);
+      if (!profileImageUrl) throw new Error("Could not get profile image URL");
+
+      const resCard = await fetch("/api/cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName.trim(),
+          profession: title.trim(),
+          Company: org.trim(),
+          hobbie: interests.trim(),
+          cover_image_url: coverImageUrl,
+          profile_image_url: profileImageUrl,
+          mobile: phone.trim() || undefined,
+          gmail: workEmail.trim() || undefined,
+          personal_website_link: undefined,
+          instagram: instagramUrl.trim() || undefined,
+          whatsapp: whatsAppUrl.trim() || undefined,
+          twitter: twitterUrl.trim() || undefined,
+          telegram: telegramUrl.trim() || undefined,
+          linkedin: linkedInUrl.trim() || undefined,
+        }),
+      });
+      const text = await resCard.text();
+      let dataCard: { error?: string; detail?: string } = {};
+      try {
+        if (text) dataCard = JSON.parse(text) as { error?: string; detail?: string };
+      } catch {
+        if (!resCard.ok) throw new Error(resCard.status === 500 ? "Server error saving card. Check database connection and logs." : "Failed to save card");
+      }
+      if (!resCard.ok) {
+        const msg = dataCard.error ?? "Failed to save card";
+        throw new Error(dataCard.detail ? `${msg}: ${dataCard.detail}` : msg);
+      }
+
+      setSaved(true);
+      clearAllFields();
+      setTimeout(() => setSaved(false), 5000);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-zinc-50 font-sans dark:bg-zinc-950">
+    <div className="relative min-h-screen overflow-x-hidden bg-zinc-50 font-sans dark:bg-zinc-950">
       <Link
         href="/"
         className="absolute left-6 top-6 z-10 text-xl font-medium text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-zinc-200"
@@ -399,7 +492,7 @@ export default function AdminFormPage() {
       {/* Preview modal */}
       {showPreview && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex min-h-0 items-center justify-center p-4"
           aria-modal
           role="dialog"
           aria-label="Card preview"
@@ -409,27 +502,40 @@ export default function AdminFormPage() {
             onClick={() => setShowPreview(false)}
             aria-hidden
           />
-          <div className="relative flex flex-col items-center gap-4">
-            <CardPreview
-              config={{
-                coverImageUrl: coverPreviewUrl || undefined,
-                profileImageUrl: profilePreviewUrl || undefined,
-                fullName: fullName.trim(),
-                title: title.trim(),
-                org: org.trim(),
-                interests: interests.trim(),
-                phone: phone.trim(),
-                personalEmail: personalEmail.trim(),
-                workEmail: workEmail.trim(),
-                linkedInUrl: linkedInUrl.trim() || undefined,
-                telegramUrl: telegramUrl.trim() || undefined,
-                twitterUrl: twitterUrl.trim() || undefined,
-                whatsAppUrl: whatsAppUrl.trim() || undefined,
-                instagramUrl: instagramUrl.trim() || undefined,
-              }}
-              width={previewSize.width}
-              height={previewSize.height}
-            />
+          <div className="relative flex max-h-screen min-h-0 w-full max-w-full flex-col items-center gap-4">
+            <div
+              className={`w-full flex min-h-0 justify-center ${
+                previewSize.scrollableOnMobile
+                  ? "max-h-[85vh] flex-1 overflow-y-auto overscroll-contain"
+                  : "sm:max-h-none sm:flex-none sm:overflow-visible"
+              }`}
+              style={
+                previewSize.scrollableOnMobile
+                  ? { WebkitOverflowScrolling: "touch" as const }
+                  : undefined
+              }
+            >
+              <CardPreview
+                config={{
+                  coverImageUrl: coverPreviewUrl || undefined,
+                  profileImageUrl: profilePreviewUrl || undefined,
+                  fullName: fullName.trim(),
+                  title: title.trim(),
+                  org: org.trim(),
+                  interests: interests.trim(),
+                  phone: phone.trim(),
+                  personalEmail: personalEmail.trim(),
+                  workEmail: workEmail.trim(),
+                  linkedInUrl: linkedInUrl.trim() || undefined,
+                  telegramUrl: telegramUrl.trim() || undefined,
+                  twitterUrl: twitterUrl.trim() || undefined,
+                  whatsAppUrl: whatsAppUrl.trim() || undefined,
+                  instagramUrl: instagramUrl.trim() || undefined,
+                }}
+                width={previewSize.width}
+                height={previewSize.height}
+              />
+            </div>
             <button
               type="button"
               onClick={() => setShowPreview(false)}

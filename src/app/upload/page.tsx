@@ -38,7 +38,7 @@ export default function UploadTestPage() {
                 method: "POST",
                 body: formData,
             });
-            const data = await res.json();
+            const data = await res.json() as { key?: string; message?: string };
             if (!res.ok) throw new Error(data.message || "Upload failed");
             setStatus("success");
             setResult({ key: data.key });

@@ -28,10 +28,12 @@ export const POST = async (req: NextRequest) => {
     });
 
     try {
-        const response = await r2.send(putObjectCommand);
-        return NextResponse.json({ success: true, key }, { status: 200 });
-    } catch(error) {
-        console.log(error);
-        return NextResponse.json({ success: false, key }, { status: 500 });
+        await r2.send(putObjectCommand);
+        const base = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+        const url = base ? `${base}/${key}` : key;
+        return NextResponse.json({ success: true, key, url }, { status: 200 });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
     }
 };
