@@ -1,10 +1,11 @@
 import { SignJWT } from "jose";
 import { NextResponse } from "next/server";
 
+
 const COOKIE_NAME = "admin_token";
 const MAX_AGE = 60 * 60 * 24; // 24 hours
 const ADMIN_EMAIL =
-  process.env.ADMIN_EMAIL ?? process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "admin@kwality.com";
+  process.env.ADMIN_EMAIL ?? process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "alpeshprajapati286@gmail.com";
 const ADMIN_PASSWORD =
   process.env.ADMIN_PASSWORD ?? process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "ALPESH";
 

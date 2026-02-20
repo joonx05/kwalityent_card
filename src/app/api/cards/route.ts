@@ -47,6 +47,22 @@ function validateBody(
   return { ok: true, data };
 }
 
+export async function GET() {
+  try {
+    const cards = await prisma.card.findMany({
+      orderBy: { id: "asc" },
+    });
+    return NextResponse.json(cards);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch cards";
+    console.error("GET /api/cards", e);
+    return NextResponse.json(
+      { error: "Failed to fetch cards", detail: message },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -72,7 +88,7 @@ export async function POST(req: NextRequest) {
         gmail: (result.data.gmail as string) ?? null,
       },
     });
-    return NextResponse.json(card, { status: 201 });
+    return NextResponse.json({ id: card.id, }, { status: 201 });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to create card";
     console.error("POST /api/cards", e);

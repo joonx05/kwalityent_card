@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
@@ -11,14 +10,16 @@ const r2 = new S3Client({
     },
 });
 
+
 export const POST = async (req: NextRequest) => {
     const formData = await req.formData();
+    const id = Math.random().toString(36).substring(2, 15);
     const file: File = formData.get("file") as File;
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
     const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-    const key = `${randomUUID()}${ext}`;
+    const key = `${id}${ext}`;
 
     const putObjectCommand = new PutObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME ?? "",

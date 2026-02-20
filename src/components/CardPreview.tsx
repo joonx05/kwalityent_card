@@ -1,5 +1,7 @@
 "use client";
 
+export const runtime = "edge";
+
 /**
  * Configuration for the CardPreview component.
  * All display fields and optional style overrides for a highly customizable card.

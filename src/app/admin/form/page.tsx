@@ -38,6 +38,7 @@ export default function AdminFormPage() {
     "https://www.instagram.com/johnkeats"
   );
   const [saved, setSaved] = useState(false);
+  const [createdCardId, setCreatedCardId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -165,9 +166,9 @@ export default function AdminFormPage() {
         }),
       });
       const text = await resCard.text();
-      let dataCard: { error?: string; detail?: string } = {};
+      let dataCard: { id?: string; error?: string; detail?: string } = {};
       try {
-        if (text) dataCard = JSON.parse(text) as { error?: string; detail?: string };
+        if (text) dataCard = JSON.parse(text) as { id?: string; error?: string; detail?: string };
       } catch {
         if (!resCard.ok) throw new Error(resCard.status === 500 ? "Server error saving card. Check database connection and logs." : "Failed to save card");
       }
@@ -176,9 +177,14 @@ export default function AdminFormPage() {
         throw new Error(dataCard.detail ? `${msg}: ${dataCard.detail}` : msg);
       }
 
+      const id = dataCard.id ?? null;
+      setCreatedCardId(id);
       setSaved(true);
       clearAllFields();
-      setTimeout(() => setSaved(false), 5000);
+      setTimeout(() => {
+        setSaved(false);
+        setCreatedCardId(null);
+      }, 5000);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -475,19 +481,63 @@ export default function AdminFormPage() {
               </button>
               <button
                 type="submit"
-                className="rounded-lg bg-zinc-900 px-6 py-2.5 font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                disabled={!allRequiredFilled || saving}
+                className="rounded-lg bg-zinc-900 px-6 py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                onClick={handleSubmit}
               >
-                Save changes
+                {saving ? "Saving" : "Save changes"}
               </button>
-              {saved && (
-                <span className="text-sm text-amber-600 dark:text-amber-400">
-                  Saved. (Connect an API to persist data.)
-                </span>
+              {submitError && (
+                <p className="text-sm font-medium text-red-600 dark:text-red-400" role="alert">
+                  {submitError}
+                </p>
               )}
             </div>
           </form>
         </div>
       </main>
+
+      {/* Success popup with card link */}
+      {saved && createdCardId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          aria-modal
+          role="dialog"
+          aria-label="Card uploaded"
+        >
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => {
+              setSaved(false);
+              setCreatedCardId(null);
+            }}
+            aria-hidden
+          />
+          <div className="relative w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+            <p className="mb-3 text-zinc-900 dark:text-zinc-100">
+              Uploaded, here&apos;s the link to the card:{" "}
+              <a
+                href={typeof window !== "undefined" ? `${window.location.origin}/${createdCardId}` : `/${createdCardId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 block break-all font-medium text-amber-600 underline hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+              >
+                {typeof window !== "undefined" ? `${window.location.origin}/${createdCardId}` : `/${createdCardId}`}
+              </a>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSaved(false);
+                setCreatedCardId(null);
+              }}
+              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Preview modal */}
       {showPreview && (
