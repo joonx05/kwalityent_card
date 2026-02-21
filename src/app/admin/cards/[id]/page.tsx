@@ -81,6 +81,7 @@ export default function AdminCardEditPage() {
     }
     fetch(`/api/cards/${encodeURIComponent(id)}`)
       .then((res) => res.json())
+      //@ts-ignore
       .then((data: { success?: boolean } & Partial<CardFromApi>) => {
         if (data.success && data.id) {
           setCard(data as CardFromApi);

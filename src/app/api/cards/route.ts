@@ -49,6 +49,7 @@ function validateBody(
 
 export async function GET() {
   try {
+    //@ts-ignore
     const cards = await prisma.card.findMany({
       orderBy: { id: "asc" },
     });

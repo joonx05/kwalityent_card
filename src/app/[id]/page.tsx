@@ -314,80 +314,12 @@ export default function CardPage() {
       <main className="flex-1 flex flex-col px-4 pb-4">
         {/* Social Media Icons Grid */}
         <div className="mx-auto mt-6 grid max-w-sm grid-cols-4 gap-4 sm:mt-10 md:mt-12">
-          {/* Personal Email */}
-          <a
-            href={card.personal_website_link ?? ""}
-            className="group flex flex-col items-center gap-2 w-full"
-            aria-label="Email alpeshprajapati286@gmail.com"
-          >
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#4A9EFF] transition-transform group-active:scale-95 flex-shrink-0">
-              <svg
-                className="h-10 w-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <span className="text-sm text-white">Personal</span>
-          </a>
-
-          {/* LinkedIn */}
-          <a
-            href={card.linkedin ?? ""}
-            className="group flex flex-col items-center gap-2 w-full"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#0077B5] transition-transform group-active:scale-95 flex-shrink-0">
-              <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g fill="none"> <path d="M0 18.338C0 8.216 8.474 0 18.92 0h218.16C247.53 0 256 8.216 256 18.338v219.327C256 247.79 247.53 256 237.08 256H18.92C8.475 256 0 247.791 0 237.668V18.335z" fill="#069"></path> <path d="M77.796 214.238V98.986H39.488v115.252H77.8zM58.65 83.253c13.356 0 21.671-8.85 21.671-19.91-.25-11.312-8.315-19.915-21.417-19.915-13.111 0-21.674 8.603-21.674 19.914 0 11.06 8.312 19.91 21.169 19.91h.248zM99 214.238h38.305v-64.355c0-3.44.25-6.889 1.262-9.346 2.768-6.885 9.071-14.012 19.656-14.012 13.858 0 19.405 10.568 19.405 26.063v61.65h38.304v-66.082c0-35.399-18.896-51.872-44.099-51.872-20.663 0-29.738 11.549-34.78 19.415h.255V98.99H99.002c.5 10.812-.003 115.252-.003 115.252z" fill="#ffffff"></path> </g> </g></svg>
-            </div>
-            <span className="text-sm text-white">LinkedIn</span>
-          </a>
-
-          {/* Telegram */}
-          <a
-            href={card.telegram ?? ""}
-            className="group flex flex-col items-center gap-2 w-full"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#0088cc] transition-transform group-active:scale-95 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" aria-label="Telegram" role="img" viewBox="0 0 512 512" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><rect width="512" height="512" rx="15%" fill="#37aee2"></rect><path fill="#c8daea" d="M199 404c-11 0-10-4-13-14l-32-105 245-144"></path><path fill="#a9c9dd" d="M199 404c7 0 11-4 16-8l45-43-56-34"></path><path fill="#f6fbfe" d="M204 319l135 99c14 9 26 4 30-14l55-258c5-22-9-32-24-25L79 245c-21 8-21 21-4 26l83 26 190-121c9-5 17-3 11 4"></path></g></svg>
-            </div>
-            <span className="text-sm text-white">Telegram</span>
-          </a>
-
-          {/* Twitter/X */}
-          <a
-            href={card.twitter ?? ""}
-            className="group flex flex-col items-center gap-2 w-full"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#111827] border border-[#2b3548] transition-transform group-active:scale-95 flex-shrink-0">
-              <svg
-                className="h-10 w-10 text-white"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </div>
-            <span className="text-sm text-white">Twitter</span>
-          </a>
-
           {/* Mobile Phone */}
           <a
-            href={card.mobile ?? ""}
+            href={card.mobile ? `tel:${card.mobile.replace(/\s/g, "")}` : "#"}
             className="group flex flex-col items-center gap-2 w-full"
-            aria-label="Call +91 9820643820"
+            aria-label={card.mobile ? `Call ${card.mobile}` : "Call"}
+            {...(!card.mobile && { onClick: (e) => e.preventDefault() })}
           >
             <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#25D366] transition-transform group-active:scale-95 flex-shrink-0">
               <svg
@@ -408,9 +340,10 @@ export default function CardPage() {
           </a>
           {/* Work Email */}
           <a
-            href={card.gmail ?? ""}
+            href={card.gmail ? `mailto:${card.gmail}` : "#"}
             className="group flex flex-col items-center gap-2 w-full"
-            aria-label="Email support@kwalityent.com"
+            aria-label={card.gmail ? `Email ${card.gmail}` : "Email"}
+            {...(!card.gmail && { onClick: (e) => e.preventDefault() })}
           >
             <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#4A9EFF] transition-transform group-active:scale-95 flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" aria-label="Gmail" role="img" viewBox="0 0 512 512" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><rect width="512" height="512" rx="15%" fill="#ffffff"></rect><path d="M158 391v-142l-82-63V361q0 30 30 30" fill="#4285f4"></path><path d="M 154 248l102 77l102-77v-98l-102 77l-102-77" fill="#ea4335"></path><path d="M354 391v-142l82-63V361q0 30-30 30" fill="#34a853"></path><path d="M76 188l82 63v-98l-30-23c-27-21-52 0-52 26" fill="#c5221f"></path><path d="M436 188l-82 63v-98l30-23c27-21 52 0 52 26" fill="#fbbc04"></path></g></svg>
@@ -475,6 +408,75 @@ export default function CardPage() {
             <span className="text-sm text-white">Instagram</span>
           </a>
 
+          {/* Personal Email */}
+          <a
+            href={card.personal_website_link ? `mailto:${card.personal_website_link}` : "#"}
+            className="group flex flex-col items-center gap-2 w-full"
+            aria-label="Email alpeshprajapati286@gmail.com"
+            {...(!card.personal_website_link && { onClick: (e) => e.preventDefault() })}
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#4A9EFF] transition-transform group-active:scale-95 flex-shrink-0">
+              <svg
+                className="h-10 w-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <span className="text-sm text-white">Personal</span>
+          </a>
+
+          {/* LinkedIn */}
+          <a
+            href={card.linkedin ?? ""}
+            className="group flex flex-col items-center gap-2 w-full"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#0077B5] transition-transform group-active:scale-95 flex-shrink-0">
+              <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g fill="none"> <path d="M0 18.338C0 8.216 8.474 0 18.92 0h218.16C247.53 0 256 8.216 256 18.338v219.327C256 247.79 247.53 256 237.08 256H18.92C8.475 256 0 247.791 0 237.668V18.335z" fill="#069"></path> <path d="M77.796 214.238V98.986H39.488v115.252H77.8zM58.65 83.253c13.356 0 21.671-8.85 21.671-19.91-.25-11.312-8.315-19.915-21.417-19.915-13.111 0-21.674 8.603-21.674 19.914 0 11.06 8.312 19.91 21.169 19.91h.248zM99 214.238h38.305v-64.355c0-3.44.25-6.889 1.262-9.346 2.768-6.885 9.071-14.012 19.656-14.012 13.858 0 19.405 10.568 19.405 26.063v61.65h38.304v-66.082c0-35.399-18.896-51.872-44.099-51.872-20.663 0-29.738 11.549-34.78 19.415h.255V98.99H99.002c.5 10.812-.003 115.252-.003 115.252z" fill="#ffffff"></path> </g> </g></svg>
+            </div>
+            <span className="text-sm text-white">LinkedIn</span>
+          </a>
+
+          {/* Telegram */}
+          <a
+            href={card.telegram ?? ""}
+            className="group flex flex-col items-center gap-2 w-full"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#0088cc] transition-transform group-active:scale-95 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" aria-label="Telegram" role="img" viewBox="0 0 512 512" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><rect width="512" height="512" rx="15%" fill="#37aee2"></rect><path fill="#c8daea" d="M199 404c-11 0-10-4-13-14l-32-105 245-144"></path><path fill="#a9c9dd" d="M199 404c7 0 11-4 16-8l45-43-56-34"></path><path fill="#f6fbfe" d="M204 319l135 99c14 9 26 4 30-14l55-258c5-22-9-32-24-25L79 245c-21 8-21 21-4 26l83 26 190-121c9-5 17-3 11 4"></path></g></svg>
+            </div>
+            <span className="text-sm text-white">Telegram</span>
+          </a>
+
+          {/* Twitter/X */}
+          <a
+            href={card.twitter ?? ""}
+            className="group flex flex-col items-center gap-2 w-full"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#111827] border border-[#2b3548] transition-transform group-active:scale-95 flex-shrink-0">
+              <svg
+                className="h-10 w-10 text-white"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </div>
+            <span className="text-sm text-white">Twitter</span>
+          </a>
         </div>
         <footer className="mt-auto py-4 text-center text-xs text-gray-400">
           Made by <span className="font-medium">kwalityent.in</span>
