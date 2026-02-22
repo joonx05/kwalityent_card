@@ -7,8 +7,8 @@ const COOKIE_NAME = "admin_token";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect /admin/form and nested routes; leave /admin (login) public
-  if (pathname === "/admin" || !pathname.startsWith("/admin/form")) {
+  // Leave /admin (login) public; protect /admin/form and /admin/cards and their nested routes
+  if (pathname === "/admin") {
     return NextResponse.next();
   }
 
@@ -33,5 +33,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/form", "/admin/form/:path*"],
+  matcher: [
+    "/admin",
+    "/admin/form",
+    "/admin/form/:path*",
+    "/admin/cards",
+    "/admin/cards/:path*",
+  ],
 };
